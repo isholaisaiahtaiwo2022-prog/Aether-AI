@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:testing/core/theme/app_theme.dart';
+import 'package:testing/features/chat/presentations/screens/widgets/animated_orb.dart';
 
 class ChatScreen extends StatelessWidget {
   const ChatScreen({super.key});
@@ -49,10 +50,11 @@ class ChatScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.auto_awesome,
-                  size: 38,
-                  color: AppTheme.primary,
+                child: const SizedBox(
+                  height: 280,
+                  child: Center(
+                    child: AnimatedOrb(size: 250,),
+                  ),
                 ),
               ),
               const SizedBox(height: 28),
