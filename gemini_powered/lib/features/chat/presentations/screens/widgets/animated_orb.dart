@@ -1,5 +1,4 @@
 
-import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -7,7 +6,7 @@ import 'package:flutter/material.dart';
 class AnimatedOrb extends StatefulWidget {
   const AnimatedOrb({
     super.key,
-    this.size = 240,
+    this.size = 340,
   });
 
   final double size;
@@ -19,6 +18,8 @@ class AnimatedOrb extends StatefulWidget {
 class _AnimatedOrbState extends State<AnimatedOrb>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  ui.FragmentProgram? _program;
+  Object? _shaderError;
 
   @override
   void initState() {
@@ -26,8 +27,32 @@ class _AnimatedOrbState extends State<AnimatedOrb>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 8),
+      duration: const Duration(seconds: 12),
     )..repeat();
+
+    _loadShader();
+  }
+
+  Future<void> _loadShader() async {
+    try {
+      final program = await ui.FragmentProgram.fromAsset(
+        'lib/shader/aether_orb.frag',
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _program = program;
+      });
+    } catch (error) {
+      if (!mounted) return;
+
+      setState(() {
+        _shaderError = error;
+      });
+
+      debugPrint('Aether orb shader failed to load: $error');
+    }
   }
 
   @override
@@ -38,182 +63,88 @@ class _AnimatedOrbState extends State<AnimatedOrb>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        final progress = _controller.value * 2 * math.pi;
+    final shaderProgram = _program;
 
-        return Transform.translate(
-          offset: Offset(0, math.sin(progress) * 5),
-          child: CustomPaint(
-            size: Size.square(widget.size),
-            painter: _OrbPainter(progress),
+    if (shaderProgram == null) {
+      return SizedBox(
+        width: widget.size,
+        height: widget.size,
+        child: const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFFFF8A3D),
+            strokeWidth: 2,
           ),
-        );
-      },
+        ),
+      );
+    }
+
+    return SizedBox(
+      width: widget.size,
+      height: widget.size,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return CustomPaint(
+            painter: _ShaderOrbPainter(
+              program: shaderProgram,
+              time: _controller.value * 12.0,
+            ),
+          );
+        },
+      ),
     );
   }
 }
 
-class _OrbPainter extends CustomPainter {
-  _OrbPainter(this.progress);
+class _ShaderOrbPainter extends CustomPainter {
+  _ShaderOrbPainter({
+    required this.program,
+    required this.time,
+  });
 
-  final double progress;
+  final ui.FragmentProgram program;
+  final double time;
 
   @override
   void paint(Canvas canvas, Size size) {
+    final shader = program.fragmentShader();
+
+    shader
+      ..setFloat(0, size.width)
+      ..setFloat(1, size.height)
+      ..setFloat(2, time);
+
+    final paint = Paint()
+      ..shader = shader
+      ..blendMode = BlendMode.srcOver;
+
+    // Soft glow behind the orb.
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width * 0.44;
-    final sphereRect = Rect.fromCircle(
-      center: center,
-      radius: radius,
-    );
+    final radius = size.shortestSide * 0.49;
 
-    // Soft orange atmosphere behind the sphere.
     canvas.drawCircle(
       center,
-      radius * 1.08,
+      radius * 0.92,
       Paint()
-        ..color = const Color(0x55FF7A24)
+        ..color = const Color(0x33FF6A22)
         ..maskFilter = const MaskFilter.blur(
-          ui.BlurStyle.normal,
-          32,
+          BlurStyle.normal,
+          38,
         ),
     );
 
-    final spherePath = Path()
-      ..addOval(sphereRect);
-
-    canvas.save();
-    canvas.clipPath(spherePath);
-
-    // Deep, warm base color.
-    canvas.drawCircle(
-      center,
-      radius,
-      Paint()
-        ..shader = const RadialGradient(
-          center: Alignment(-0.35, -0.4),
-          radius: 1.2,
-          colors: [
-            Color(0xFFFFC078),
-            Color(0xFFFF8A3D),
-            Color(0xFFD94D16),
-            Color(0xFF35160F),
-          ],
-          stops: [0.0, 0.34, 0.68, 1.0],
-        ).createShader(sphereRect),
+    // The shader draws the orb inside this canvas.
+    canvas.drawRect(
+      Offset.zero & size,
+      paint,
     );
 
-    // Moving pools of color create the rolling effect.
-    _drawBlob(
-      canvas,
-      center: Offset(
-        center.dx + math.cos(progress) * radius * 0.42,
-        center.dy + math.sin(progress) * radius * 0.48,
-      ),
-      radius: radius * 0.82,
-      colors: const [
-        Color(0xFFFFD18D),
-        Color(0xFFFF8A3D),
-        Color(0x00FF8A3D),
-      ],
-    );
-
-    _drawBlob(
-      canvas,
-      center: Offset(
-        center.dx + math.cos(progress + 2.2) * radius * 0.52,
-        center.dy + math.sin(progress + 2.2) * radius * 0.46,
-      ),
-      radius: radius * 0.76,
-      colors: const [
-        Color(0xFFFF5C20),
-        Color(0xFFB52D12),
-        Color(0x00B52D12),
-      ],
-    );
-
-    _drawBlob(
-      canvas,
-      center: Offset(
-        center.dx + math.cos(progress + 4.1) * radius * 0.48,
-        center.dy + math.sin(progress + 4.1) * radius * 0.42,
-      ),
-      radius: radius * 0.65,
-      colors: const [
-        Color(0xFFFFB04A),
-        Color(0xFFEF6A22),
-        Color(0x00EF6A22),
-      ],
-    );
-
-    // Glossy highlight near the upper-left edge.
-    canvas.drawCircle(
-      Offset(
-        center.dx - radius * 0.32,
-        center.dy - radius * 0.42,
-      ),
-      radius * 0.22,
-      Paint()
-        ..shader = RadialGradient(
-          colors: [
-            const Color(0x99FFFFFF),
-            const Color(0x22FFFFFF),
-            const Color(0x00FFFFFF),
-          ],
-        ).createShader(
-          Rect.fromCircle(
-            center: Offset(
-              center.dx - radius * 0.32,
-              center.dy - radius * 0.42,
-            ),
-            radius: radius * 0.22,
-          ),
-        ),
-    );
-
-    // Subtle dark edge gives the sphere more depth.
-    canvas.drawCircle(
-      center,
-      radius,
-      Paint()
-        ..shader = RadialGradient(
-          colors: [
-            const Color(0x00000000),
-            const Color(0x00000000),
-            const Color(0x55000000),
-          ],
-          stops: const [0.55, 0.78, 1.0],
-        ).createShader(sphereRect),
-    );
-
-    canvas.restore();
-  }
-
-  void _drawBlob(
-    Canvas canvas, {
-    required Offset center,
-    required double radius,
-    required List<Color> colors,
-  }) {
-    final rect = Rect.fromCircle(
-      center: center,
-      radius: radius,
-    );
-
-    canvas.drawCircle(
-      center,
-      radius,
-      Paint()
-        ..shader = RadialGradient(
-          colors: colors,
-        ).createShader(rect),
-    );
+    shader.dispose();
   }
 
   @override
-  bool shouldRepaint(covariant _OrbPainter oldDelegate) {
-    return oldDelegate.progress != progress;
+  bool shouldRepaint(covariant _ShaderOrbPainter oldDelegate) {
+    return oldDelegate.time != time ||
+        oldDelegate.program != program;
   }
 }

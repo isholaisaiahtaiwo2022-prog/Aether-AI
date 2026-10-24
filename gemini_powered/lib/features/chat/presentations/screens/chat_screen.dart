@@ -50,12 +50,17 @@ class ChatScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: const SizedBox(
-                  height: 280,
-                  child: Center(
-                    child: AnimatedOrb(size: 250,),
-                  ),
-                ),
+                child: LayoutBuilder(
+  builder: (context, constraints) {
+    final orbSize = (constraints.maxWidth * 0.88)
+        .clamp(280.0, 420.0)
+        .toDouble();
+
+    return Center(
+      child: AnimatedOrb(size: orbSize),
+    );
+  },
+),
               ),
               const SizedBox(height: 28),
               const Text(
