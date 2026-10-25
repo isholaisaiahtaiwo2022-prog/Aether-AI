@@ -1,9 +1,57 @@
+
 import 'package:flutter/material.dart';
 import 'package:testing/core/theme/app_theme.dart';
 import 'package:testing/features/chat/presentations/screens/widgets/animated_orb.dart';
 
-class ChatScreen extends StatelessWidget {
+class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final TextEditingController _messageController =
+      TextEditingController();
+
+  final ScrollController _scrollController = ScrollController();
+
+  final List<String> _messages = [];
+
+  void _sendMessage() {
+    final message = _messageController.text.trim();
+
+    if (message.isEmpty) return;
+
+    setState(() {
+      _messages.add(message);
+      _messageController.clear();
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  void _startNewChat() {
+    setState(() {
+      _messages.clear();
+      _messageController.clear();
+    });
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,42 +69,172 @@ class ChatScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: _startNewChat,
             icon: const Icon(Icons.add),
             tooltip: 'New chat',
           ),
           const SizedBox(width: 8),
         ],
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const AnimatedOrb(size: 96),
-              const SizedBox(height: 28),
-              const Text(
-                'What can I help you with?',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 25,
-                  fontWeight: FontWeight.w600,
-                ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: _messages.isEmpty
+                  ? _buildWelcomeScreen()
+                  : _buildMessageList(),
+            ),
+            _buildMessageInput(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Welcome screen shown before the first message.
+  Widget _buildWelcomeScreen() {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const AnimatedOrb(size: 180),
+            const SizedBox(height: 28),
+            const Text(
+              'What can I help you with?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 25,
+                fontWeight: FontWeight.w600,
               ),
-              const SizedBox(height: 12),
-              const Text(
-                'Ask a question, explore an idea, '
-                'or start something new.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: AppTheme.textSecondary,
-                  height: 1.5,
-                ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Ask a question, explore an idea, '
+              'or start something new.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: AppTheme.textSecondary,
+                height: 1.5,
               ),
-            ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Displays messages sent by the user.
+  Widget _buildMessageList() {
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 20,
+      ),
+      itemCount: _messages.length,
+      itemBuilder: (context, index) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.sizeOf(context).width * 0.8,
+            ),
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+            decoration: BoxDecoration(
+              color: AppTheme.primary.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(20).copyWith(
+                bottomRight: const Radius.circular(5),
+              ),
+            ),
+            child: Text(
+              _messages[index],
+              style: const TextStyle(
+                fontSize: 15,
+                height: 1.5,
+              ),
+            ),
           ),
+        );
+      },
+    );
+  }
+
+  // Message composer fixed below the conversation.
+  Widget _buildMessageInput() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+      ),
+      child: Container(
+        padding: const EdgeInsets.only(
+          left: 16,
+          right: 6,
+          top: 4,
+          bottom: 4,
+        ),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.10),
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _messageController,
+                minLines: 1,
+                maxLines: 5,
+                keyboardType: TextInputType.multiline,
+                textCapitalization: TextCapitalization.sentences,
+                textInputAction: TextInputAction.newline,
+                onSubmitted: (_) => _sendMessage(),
+                style: const TextStyle(
+                  fontSize: 15,
+                  height: 1.4,
+                ),
+                decoration: const InputDecoration(
+                  hintText: 'Message Aether...',
+                  hintStyle: TextStyle(
+                    color: AppTheme.textSecondary,
+                  ),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 12,
+                  ),
+                  isDense: true,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: IconButton.filled(
+                onPressed: _sendMessage,
+                tooltip: 'Send message',
+                style: IconButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.black,
+                  minimumSize: const Size(44, 44),
+                  shape: const CircleBorder(),
+                ),
+                icon: const Icon(Icons.arrow_upward),
+              ),
+            ),
+          ],
         ),
       ),
     );
