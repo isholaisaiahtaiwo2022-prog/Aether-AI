@@ -34,34 +34,7 @@ class ChatScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 84,
-                height: 84,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppTheme.surface,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primary.withValues(
-                        alpha: 0.18,
-                      ),
-                      blurRadius: 32,
-                      spreadRadius: 4,
-                    ),
-                  ],
-                ),
-                child: LayoutBuilder(
-  builder: (context, constraints) {
-    final orbSize = (constraints.maxWidth * 0.88)
-        .clamp(280.0, 420.0)
-        .toDouble();
-
-    return Center(
-      child: AnimatedOrb(size: orbSize),
-    );
-  },
-),
-              ),
+              const AnimatedOrb(size: 96),
               const SizedBox(height: 28),
               const Text(
                 'What can I help you with?',
