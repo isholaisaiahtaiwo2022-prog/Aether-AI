@@ -68,4 +68,28 @@ class ChatRepository {
         .toList();
   }
 
+
+  
+  // Retrieve all messages belonging to a conversation.
+  Future<List<ChatMessage>> getMessages(
+    String conversationId,
+  ) async {
+    final Database db = await _appDatabase.database;
+
+    final List<Map<String, Object?>> results = await db.query(
+      'messages',
+      where: 'conversation_id = ?',
+      whereArgs: [conversationId],
+      orderBy: 'created_at ASC',
+    );
+
+    return results
+        .map((message) => ChatMessage.fromMap(message))
+        .toList();
+  }
+
+
+  
+
+
 }
