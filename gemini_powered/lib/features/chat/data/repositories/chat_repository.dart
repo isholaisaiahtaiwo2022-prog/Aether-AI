@@ -51,4 +51,21 @@ class ChatRepository {
       whereArgs: [conversationId],
     );
   }
+
+
+  
+  // Retrieve all conversations, newest activity first.
+  Future<List<ChatConversation>> getConversations() async {
+    final Database db = await _appDatabase.database;
+
+    final List<Map<String, Object?>> results = await db.query(
+      'conversations',
+      orderBy: 'updated_at DESC',
+    );
+
+    return results
+        .map((conversation) => ChatConversation.fromMap(conversation))
+        .toList();
+  }
+
 }
