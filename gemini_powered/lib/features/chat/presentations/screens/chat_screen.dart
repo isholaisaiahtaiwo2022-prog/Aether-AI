@@ -44,6 +44,8 @@ class _ChatScreenState extends State<ChatScreen> {
       _messages.clear();
       _messageController.clear();
     });
+
+    Navigator.pop(context);
   }
 
   @override
@@ -56,7 +58,15 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: _buildChatHistoryDrawer(),
       appBar: AppBar(
+        leading: Builder(
+          builder: (context) => IconButton(
+            onPressed: () => Scaffold.of(context).openDrawer(),
+            icon: const Icon(Icons.menu_rounded),
+            tooltip: 'Chat history',
+          ),
+        ),
         title: const Row(
           children: [
             Icon(
@@ -91,7 +101,105 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Welcome screen shown before the first message.
+  // Chat history navigation drawer.
+  Widget _buildChatHistoryDrawer() {
+    return Drawer(
+      backgroundColor: AppTheme.surface,
+      width: MediaQuery.sizeOf(context).width * 0.82,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.auto_awesome,
+                    color: AppTheme.primary,
+                    size: 26,
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Aether',
+                    style: TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                    tooltip: 'Close',
+                  ),
+                ],
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _startNewChat,
+                  icon: const Icon(Icons.add),
+                  label: const Text('New chat'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primary,
+                    side: BorderSide(
+                      color: AppTheme.primary.withValues(alpha: 0.5),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 28, 20, 12),
+              child: Text(
+                'RECENT CHATS',
+                style: TextStyle(
+                  fontSize: 11,
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+            ),
+
+            const Expanded(
+              child: Center(
+                child: Text(
+                  'Your conversations will appear here.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ),
+
+            const Divider(height: 1),
+
+            ListTile(
+              leading: const Icon(Icons.settings_outlined),
+              title: const Text('Settings'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildWelcomeScreen() {
     return Center(
       child: SingleChildScrollView(
@@ -126,7 +234,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Displays messages sent by the user.
   Widget _buildMessageList() {
     return ListView.builder(
       controller: _scrollController,
@@ -166,7 +273,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Message composer fixed below the conversation.
   Widget _buildMessageInput() {
     return Container(
       width: double.infinity,
