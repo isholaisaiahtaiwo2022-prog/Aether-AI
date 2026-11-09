@@ -88,8 +88,16 @@ class ChatRepository {
         .toList();
   }
 
-
   
+  // Delete a conversation and its associated messages.
+  Future<void> deleteConversation(String conversationId) async {
+    final Database db = await _appDatabase.database;
 
+    await db.delete(
+      'conversations',
+      where: 'id = ?',
+      whereArgs: [conversationId],
+    );
+  }
 
 }
