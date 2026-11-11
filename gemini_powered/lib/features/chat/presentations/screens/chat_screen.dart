@@ -1,9 +1,8 @@
-
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:testing/core/theme/app_theme.dart';
-import 'package:testing/features/chat/presentations/screens/widgets/animated_orb.dart';
+// import 'package:testing/features/chat/presentations/screens/widgets/animated_orb.dart';
 import 'package:testing/features/chat/data/repositories/chat_repository.dart';
 import 'package:testing/features/chat/domain/models/chat_conversation.dart';
 import 'package:testing/features/chat/domain/models/chat_message.dart';
@@ -16,8 +15,7 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final TextEditingController _messageController =
-      TextEditingController();
+  final TextEditingController _messageController = TextEditingController();
 
   final ScrollController _scrollController = ScrollController();
 
@@ -49,8 +47,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     try {
-      final conversations =
-          await _chatRepository.getConversations();
+      final conversations = await _chatRepository.getConversations();
 
       if (!mounted) return;
 
@@ -110,10 +107,7 @@ class _ChatScreenState extends State<ChatScreen> {
       );
 
       // Save the message in SQLite.
-      await _chatRepository.saveMessage(
-        _currentConversationId!,
-        chatMessage,
-      );
+      await _chatRepository.saveMessage(_currentConversationId!, chatMessage);
 
       if (!mounted) return;
 
@@ -144,13 +138,9 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   // Open a previously saved conversation.
-  Future<void> _openConversation(
-    ChatConversation conversation,
-  ) async {
+  Future<void> _openConversation(ChatConversation conversation) async {
     try {
-      final messages = await _chatRepository.getMessages(
-        conversation.id,
-      );
+      final messages = await _chatRepository.getMessages(conversation.id);
 
       if (!mounted) return;
 
@@ -171,9 +161,7 @@ class _ChatScreenState extends State<ChatScreen> {
       debugPrint('Error opening conversation: $error');
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Unable to open this conversation.'),
-        ),
+        const SnackBar(content: Text('Unable to open this conversation.')),
       );
     }
   }
@@ -229,10 +217,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
         title: const Row(
           children: [
-            Icon(
-              Icons.auto_awesome,
-              color: AppTheme.primary,
-            ),
+            Icon(Icons.auto_awesome, color: AppTheme.primary),
             SizedBox(width: 10),
             Text('Aether'),
           ],
@@ -288,10 +273,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
                   const Text(
                     'Aether',
-                    style: TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 21, fontWeight: FontWeight.w600),
                   ),
 
                   const Spacer(),
@@ -349,9 +331,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
 
             // Display saved conversations.
-            Expanded(
-              child: _buildConversationList(),
-            ),
+            Expanded(child: _buildConversationList()),
 
             const Divider(height: 1),
 
@@ -373,9 +353,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildConversationList() {
     if (_isLoadingHistory) {
       return const Center(
-        child: CircularProgressIndicator(
-          color: AppTheme.primary,
-        ),
+        child: CircularProgressIndicator(color: AppTheme.primary),
       );
     }
 
@@ -387,10 +365,7 @@ class _ChatScreenState extends State<ChatScreen> {
           child: Text(
             'Your conversations will appear here.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 13,
-            ),
+            style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
           ),
         ),
       );
@@ -402,19 +377,14 @@ class _ChatScreenState extends State<ChatScreen> {
       itemBuilder: (context, index) {
         final conversation = _conversations[index];
 
-        final isSelected =
-            conversation.id == _currentConversationId;
+        final isSelected = conversation.id == _currentConversationId;
 
         return ListTile(
           selected: isSelected,
 
-          selectedTileColor:
-              AppTheme.primary.withValues(alpha: 0.10),
+          selectedTileColor: AppTheme.primary.withValues(alpha: 0.10),
 
-          leading: const Icon(
-            Icons.chat_bubble_outline,
-            size: 19,
-          ),
+          leading: const Icon(Icons.chat_bubble_outline, size: 19),
 
           title: Text(
             conversation.title,
@@ -435,42 +405,80 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildWelcomeScreen() {
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-
-          children: [
-            const AnimatedOrb(size: 180),
-
-            const SizedBox(height: 28),
-
-            const Text(
-              'What can I help you with?',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 25,
-                fontWeight: FontWeight.w600,
+        padding: const EdgeInsets.symmetric(vertical: 32),
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'What can I help you with?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 27,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.5,
+                ),
               ),
-            ),
 
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            const Text(
-              'Ask a question, explore an idea, '
-              'or start something new.',
-              textAlign: TextAlign.center,
-
-              style: TextStyle(
-                fontSize: 15,
-                color: AppTheme.textSecondary,
-                height: 1.5,
+              const Text(
+                'Ask a question, explore an idea, or start something new.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.textSecondary,
+                  height: 1.5,
+                ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 36),
+
+              // Top row: moves from right to left.
+              _AnimatedSuggestionRow(
+                reverse: false,
+                suggestions: const [
+                  'Explore with AI',
+                  'Suggest an idea',
+                  'Explain a concept',
+                  'Research a topic',
+                  'Compare options',
+                  'Learn something new',
+                ],
+                onSelected: _useSuggestion,
+              ),
+
+              const SizedBox(height: 14),
+
+              // Bottom row: moves from left to right.
+              _AnimatedSuggestionRow(
+                reverse: true,
+                suggestions: const [
+                  'Draft a message',
+                  'Write some code',
+                  'Summarise a text',
+                  'Plan my day',
+                  'Solve a problem',
+                  'Generate ideas',
+                ],
+                onSelected: _useSuggestion,
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  // Put a selected suggestion into the message composer.
+  void _useSuggestion(String suggestion) {
+    setState(() {
+      _messageController.text = suggestion;
+      _messageController.selection = TextSelection.collapsed(
+        offset: suggestion.length,
+      );
+    });
   }
 
   // Display messages.
@@ -478,10 +486,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return ListView.builder(
       controller: _scrollController,
 
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 20,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
 
       itemCount: _messages.length,
 
@@ -500,10 +505,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
             margin: const EdgeInsets.only(bottom: 16),
 
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
 
             decoration: BoxDecoration(
               color: message.isUser
@@ -523,10 +525,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
             child: Text(
               message.content,
-              style: const TextStyle(
-                fontSize: 15,
-                height: 1.5,
-              ),
+              style: const TextStyle(fontSize: 15, height: 1.5),
             ),
           ),
         );
@@ -546,20 +545,13 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
 
       child: Container(
-        padding: const EdgeInsets.only(
-          left: 16,
-          right: 6,
-          top: 4,
-          bottom: 4,
-        ),
+        padding: const EdgeInsets.only(left: 16, right: 6, top: 4, bottom: 4),
 
         decoration: BoxDecoration(
           color: AppTheme.surface,
           borderRadius: BorderRadius.circular(24),
 
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.10),
-          ),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
         ),
 
         child: Row(
@@ -583,25 +575,18 @@ class _ChatScreenState extends State<ChatScreen> {
 
                 enabled: !_isSendingMessage,
 
-                style: const TextStyle(
-                  fontSize: 15,
-                  height: 1.4,
-                ),
+                style: const TextStyle(fontSize: 15, height: 1.4),
 
                 decoration: const InputDecoration(
                   hintText: 'Message Aether...',
 
-                  hintStyle: TextStyle(
-                    color: AppTheme.textSecondary,
-                  ),
+                  hintStyle: TextStyle(color: AppTheme.textSecondary),
 
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
 
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 12,
-                  ),
+                  contentPadding: EdgeInsets.symmetric(vertical: 12),
 
                   isDense: true,
                 ),
@@ -614,9 +599,7 @@ class _ChatScreenState extends State<ChatScreen> {
               padding: const EdgeInsets.only(bottom: 2),
 
               child: IconButton.filled(
-                onPressed: _isSendingMessage
-                    ? null
-                    : _sendMessage,
+                onPressed: _isSendingMessage ? null : _sendMessage,
 
                 tooltip: 'Send message',
 
@@ -643,5 +626,181 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       ),
     );
+  }
+}
+
+
+class _AnimatedSuggestionRow extends StatefulWidget {
+  final List<String> suggestions;
+  final ValueChanged<String> onSelected;
+  final bool reverse;
+
+  const _AnimatedSuggestionRow({
+    required this.suggestions,
+    required this.onSelected,
+    required this.reverse,
+  });
+
+  @override
+  State<_AnimatedSuggestionRow> createState() =>
+      _AnimatedSuggestionRowState();
+}
+
+class _AnimatedSuggestionRowState
+    extends State<_AnimatedSuggestionRow> {
+  final ScrollController _scrollController = ScrollController();
+
+  bool _isAnimating = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startAnimation();
+    });
+  }
+
+  Future<void> _startAnimation() async {
+    if (_isAnimating) return;
+
+    _isAnimating = true;
+
+    while (mounted) {
+      await WidgetsBinding.instance.endOfFrame;
+
+      if (!mounted) break;
+
+      if (!_scrollController.hasClients) {
+        await Future.delayed(
+          const Duration(milliseconds: 300),
+        );
+        continue;
+      }
+
+      final position = _scrollController.position;
+
+      final maxExtent = position.maxScrollExtent;
+
+      if (maxExtent <= 0) {
+        await Future.delayed(
+          const Duration(milliseconds: 300),
+        );
+        continue;
+      }
+
+      // Calculate the width of one complete suggestion sequence.
+      final distance = (
+        maxExtent + position.viewportDimension
+      ) / 2;
+
+      final target = distance.clamp(0.0, maxExtent);
+
+      if (widget.reverse) {
+        // Bottom row moves from left to right.
+        _scrollController.jumpTo(target);
+
+        await _scrollController.animateTo(
+          0,
+          duration: const Duration(seconds: 22),
+          curve: Curves.linear,
+        );
+      } else {
+        // Top row moves from right to left.
+        _scrollController.jumpTo(0);
+
+        await _scrollController.animateTo(
+          target,
+          duration: const Duration(seconds: 22),
+          curve: Curves.linear,
+        );
+      }
+
+      if (!mounted) break;
+
+      await Future.delayed(
+        const Duration(milliseconds: 100),
+      );
+    }
+
+    _isAnimating = false;
+  }
+
+  Widget _buildSuggestion(String suggestion) {
+    return Material(
+      color: AppTheme.surface,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: () => widget.onSelected(suggestion),
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 19,
+            vertical: 14,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.10),
+            ),
+          ),
+          child: Text(
+            suggestion,
+            style: const TextStyle(
+              fontSize: 13,
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuggestionSequence(double minWidth) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        minWidth: minWidth,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: widget.suggestions.map((suggestion) {
+          return _buildSuggestion(suggestion);
+        }).toList(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final sequence = _buildSuggestionSequence(
+          constraints.maxWidth * 1.15,
+        );
+
+        return SizedBox(
+          height: 52,
+          child: ListView(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              sequence,
+              const SizedBox(width: 16),
+              sequence,
+              const SizedBox(width: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 }
