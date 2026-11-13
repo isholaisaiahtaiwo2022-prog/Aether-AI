@@ -1,5 +1,5 @@
 
-import 'package:sqflite/sqflite.dart';
+import 'package:drift/drift.dart';
 
 import 'package:testing/core/database/app_database.dart';
 import 'package:testing/features/chat/domain/models/chat_conversation.dart';
@@ -16,88 +16,87 @@ class ChatRepository {
   Future<void> createConversation(
     ChatConversation conversation,
   ) async {
-    final Database db = await _appDatabase.database;
-
-    await db.insert(
-      'conversations',
-      conversation.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+    await _appDatabase.into(_appDatabase.conversations).insertOnConflictUpdate(
+      ConversationsCompanion.insert(
+        id: conversation.id,
+        title: conversation.title,
+        createdAt: conversation.createdAt.toIso8601String(),
+        updatedAt: conversation.updatedAt.toIso8601String(),
+      ),
     );
   }
 
-  // Save a message inside an existing conversation.
+  // Save a message and update the conversation activity time.
   Future<void> saveMessage(
     String conversationId,
     ChatMessage message,
   ) async {
-    final Database db = await _appDatabase.database;
+    await _appDatabase.transaction(() async {
+      await _appDatabase.into(_appDatabase.messages).insertOnConflictUpdate(
+        MessagesCompanion.insert(
+          id: message.id,
+          conversationId: conversationId,
+          content: message.content,
+          role: message.role.name,
+          createdAt: message.createdAt.toIso8601String(),
+          status: message.status.name,
+        ),
+      );
 
-    await db.insert(
-      'messages',
-      {
-        ...message.toMap(),
-        'conversation_id': conversationId,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-
-    // Update the conversation's last activity time.
-    await db.update(
-      'conversations',
-      {
-        'updated_at': message.createdAt.toIso8601String(),
-      },
-      where: 'id = ?',
-      whereArgs: [conversationId],
-    );
+      await (_appDatabase.update(_appDatabase.conversations)
+            ..where((table) => table.id.equals(conversationId)))
+          .write(
+        ConversationsCompanion(
+          updatedAt: Value(message.createdAt.toIso8601String()),
+        ),
+      );
+    });
   }
 
-
-  
   // Retrieve all conversations, newest activity first.
   Future<List<ChatConversation>> getConversations() async {
-    final Database db = await _appDatabase.database;
+    final results = await (_appDatabase.select(_appDatabase.conversations)
+          ..orderBy([
+            (table) => OrderingTerm.desc(table.updatedAt),
+          ]))
+        .get();
 
-    final List<Map<String, Object?>> results = await db.query(
-      'conversations',
-      orderBy: 'updated_at DESC',
-    );
-
-    return results
-        .map((conversation) => ChatConversation.fromMap(conversation))
-        .toList();
+    return results.map((conversation) {
+      return ChatConversation(
+        id: conversation.id,
+        title: conversation.title,
+        createdAt: DateTime.parse(conversation.createdAt),
+        updatedAt: DateTime.parse(conversation.updatedAt),
+      );
+    }).toList();
   }
 
-
-  
   // Retrieve all messages belonging to a conversation.
   Future<List<ChatMessage>> getMessages(
     String conversationId,
   ) async {
-    final Database db = await _appDatabase.database;
+    final results = await (_appDatabase.select(_appDatabase.messages)
+          ..where((table) => table.conversationId.equals(conversationId))
+          ..orderBy([
+            (table) => OrderingTerm.asc(table.createdAt),
+          ]))
+        .get();
 
-    final List<Map<String, Object?>> results = await db.query(
-      'messages',
-      where: 'conversation_id = ?',
-      whereArgs: [conversationId],
-      orderBy: 'created_at ASC',
-    );
-
-    return results
-        .map((message) => ChatMessage.fromMap(message))
-        .toList();
+    return results.map((message) {
+      return ChatMessage(
+        id: message.id,
+        content: message.content,
+        role: MessageRole.values.byName(message.role),
+        createdAt: DateTime.parse(message.createdAt),
+        status: MessageStatus.values.byName(message.status),
+      );
+    }).toList();
   }
 
-  
   // Delete a conversation and its associated messages.
   Future<void> deleteConversation(String conversationId) async {
-    final Database db = await _appDatabase.database;
-
-    await db.delete(
-      'conversations',
-      where: 'id = ?',
-      whereArgs: [conversationId],
-    );
+    await (_appDatabase.delete(_appDatabase.conversations)
+          ..where((table) => table.id.equals(conversationId)))
+        .go();
   }
-
 }

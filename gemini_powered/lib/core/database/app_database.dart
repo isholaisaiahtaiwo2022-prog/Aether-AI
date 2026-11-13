@@ -1,68 +1,66 @@
 
-import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:drift/drift.dart';
+import 'package:drift_flutter/drift_flutter.dart';
+import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart' show getDatabasesPath;
 
-class AppDatabase {
-  // Singleton: one shared database manager.
-  AppDatabase._internal();
+import 'tables.dart';
 
-  static final AppDatabase instance = AppDatabase._internal();
+part 'app_database.g.dart';
 
-  static Database? _database;
+@DriftDatabase(
+  tables: [
+    Conversations,
+    Messages,
+  ],
+)
+class AppDatabase extends _$AppDatabase {
+  AppDatabase() : super(_openConnection());
+  static final AppDatabase instance = AppDatabase();
 
-  Future<Database> get database async {
-    if (_database != null) {
-      return _database!;
-    }
+  @override
+  int get schemaVersion => 1;
 
-    _database = await _initDatabase();
-    return _database!;
-  }
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        beforeOpen: (details) async {
+          await customStatement('PRAGMA foreign_keys = ON');
+        },
+      );
+}
 
-  Future<Database> _initDatabase() async {
-    final databasePath = await getDatabasesPath();
+QueryExecutor _openConnection() {
+  return driftDatabase(
+    name: 'aether_ai',
 
-    final path = join(
-      databasePath,
-      'aether_ai.db',
-    );
+    native: DriftNativeOptions(
+      databasePath: () async {
+        // Preserve the existing database location on mobile.
+        if (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS) {
+          final databaseDirectory = await getDatabasesPath();
 
-    return openDatabase(
-      path,
-      version: 1,
-      onConfigure: (db) async {
-        await db.execute('PRAGMA foreign_keys = ON');
+          return p.join(
+            databaseDirectory,
+            'aether_ai.db',
+          );
+        }
+
+        // Use application support storage on desktop.
+        final directory = await getApplicationSupportDirectory();
+
+        return p.join(
+          directory.path,
+          'aether_ai.db',
+        );
       },
-      onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE conversations (
-            id TEXT PRIMARY KEY,
-            title TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL
-          )
-        ''');
+    ),
 
-        await db.execute('''
-          CREATE TABLE messages (
-            id TEXT PRIMARY KEY,
-            conversation_id TEXT NOT NULL,
-            content TEXT NOT NULL,
-            role TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            status TEXT NOT NULL,
-
-            FOREIGN KEY (conversation_id)
-            REFERENCES conversations (id)
-            ON DELETE CASCADE
-          )
-        ''');
-
-        await db.execute('''
-          CREATE INDEX idx_messages_conversation_id
-          ON messages (conversation_id)
-        ''');
-      },
-    );
-  }
+    web: DriftWebOptions(
+      sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+      driftWorker: Uri.parse('drift_worker.dart.js'),
+    ),
+  );
 }
