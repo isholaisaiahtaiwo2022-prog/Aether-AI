@@ -166,6 +166,71 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  Future<void> _deleteConversation(ChatConversation conversation) async {
+    // Ask the user to confirm deletion.
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete conversation?'),
+          content: Text(
+            'Are you sure you want to delete '
+            '"${conversation.title}"? '
+            'This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, true);
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true) return;
+
+    try {
+      // Delete from the local database.
+      await _chatRepository.deleteConversation(conversation.id);
+
+      if (!mounted) return;
+
+      setState(() {
+        // Remove the conversation from the visible list.
+        _conversations.removeWhere((item) => item.id == conversation.id);
+
+        // If the deleted conversation is currently open,
+        // return to the welcome screen.
+        if (_currentConversationId == conversation.id) {
+          _currentConversationId = null;
+          _messages.clear();
+          _messageController.clear();
+        }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Conversation deleted successfully.')),
+      );
+    } catch (error) {
+      debugPrint('Error deleting conversation: $error');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to delete conversation.')),
+      );
+    }
+  }
+
   // Start a new conversation without deleting saved chats.
   void _startNewChat({bool closeDrawer = false}) {
     setState(() {
@@ -385,6 +450,18 @@ class _ChatScreenState extends State<ChatScreen> {
           selectedTileColor: AppTheme.primary.withValues(alpha: 0.10),
 
           leading: const Icon(Icons.chat_bubble_outline, size: 19),
+
+          trailing: IconButton(
+            icon: const Icon(
+              Icons.delete_outline,
+              color: Colors.redAccent,
+              size: 20,
+            ),
+            tooltip: 'Delete conversation',
+            onPressed: () {
+              _deleteConversation(conversation);
+            },
+          ),
 
           title: Text(
             conversation.title,
@@ -629,7 +706,6 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
-
 class _AnimatedSuggestionRow extends StatefulWidget {
   final List<String> suggestions;
   final ValueChanged<String> onSelected;
@@ -642,12 +718,10 @@ class _AnimatedSuggestionRow extends StatefulWidget {
   });
 
   @override
-  State<_AnimatedSuggestionRow> createState() =>
-      _AnimatedSuggestionRowState();
+  State<_AnimatedSuggestionRow> createState() => _AnimatedSuggestionRowState();
 }
 
-class _AnimatedSuggestionRowState
-    extends State<_AnimatedSuggestionRow> {
+class _AnimatedSuggestionRowState extends State<_AnimatedSuggestionRow> {
   final ScrollController _scrollController = ScrollController();
 
   bool _isAnimating = false;
@@ -672,9 +746,7 @@ class _AnimatedSuggestionRowState
       if (!mounted) break;
 
       if (!_scrollController.hasClients) {
-        await Future.delayed(
-          const Duration(milliseconds: 300),
-        );
+        await Future.delayed(const Duration(milliseconds: 300));
         continue;
       }
 
@@ -683,16 +755,12 @@ class _AnimatedSuggestionRowState
       final maxExtent = position.maxScrollExtent;
 
       if (maxExtent <= 0) {
-        await Future.delayed(
-          const Duration(milliseconds: 300),
-        );
+        await Future.delayed(const Duration(milliseconds: 300));
         continue;
       }
 
       // Calculate the width of one complete suggestion sequence.
-      final distance = (
-        maxExtent + position.viewportDimension
-      ) / 2;
+      final distance = (maxExtent + position.viewportDimension) / 2;
 
       final target = distance.clamp(0.0, maxExtent);
 
@@ -718,9 +786,7 @@ class _AnimatedSuggestionRowState
 
       if (!mounted) break;
 
-      await Future.delayed(
-        const Duration(milliseconds: 100),
-      );
+      await Future.delayed(const Duration(milliseconds: 100));
     }
 
     _isAnimating = false;
@@ -734,15 +800,10 @@ class _AnimatedSuggestionRowState
         onTap: () => widget.onSelected(suggestion),
         borderRadius: BorderRadius.circular(18),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 19,
-            vertical: 14,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 19, vertical: 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.10),
-            ),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
           ),
           child: Text(
             suggestion,
@@ -759,9 +820,7 @@ class _AnimatedSuggestionRowState
 
   Widget _buildSuggestionSequence(double minWidth) {
     return ConstrainedBox(
-      constraints: BoxConstraints(
-        minWidth: minWidth,
-      ),
+      constraints: BoxConstraints(minWidth: minWidth),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -776,9 +835,7 @@ class _AnimatedSuggestionRowState
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final sequence = _buildSuggestionSequence(
-          constraints.maxWidth * 1.15,
-        );
+        final sequence = _buildSuggestionSequence(constraints.maxWidth * 1.15);
 
         return SizedBox(
           height: 52,

@@ -1012,7 +1012,7 @@ class $$ConversationsTableTableManager
                           ._messagesRefsTable(db),
                       managerFromTypedResult: (p0) =>
                           $$ConversationsTableReferences(
-                            db,
+                             db,
                             table,
                             p0,
                           ).messagesRefs,
