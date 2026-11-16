@@ -1,9 +1,9 @@
-
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:testing/core/theme/app_theme.dart';
-import 'package:testing/features/chat/presentations/screens/chat_screen.dart';
+import 'package:testing/features/chat/presentations/screens/auth_gate.dart';
+// import 'package:testing/features/presentations/screens/auth_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
       title: 'Aether AI',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: const ChatScreen(),
+      home: const AuthGate(),
     );
   }
 }
