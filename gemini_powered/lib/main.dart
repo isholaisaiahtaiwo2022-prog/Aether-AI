@@ -3,14 +3,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:testing/core/theme/app_theme.dart';
 import 'package:testing/features/chat/presentations/screens/auth_gate.dart';
-// import 'package:testing/features/presentations/screens/auth_gate.dart';
+// import 'package:testing/features/presentxations/screens/auth_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(
-    url: 'YOUR_SUPABASE_PROJECT_URL',
-    publishableKey: 'YOUR_SUPABASE_PUBLISHABLE_KEY',
+    url: 'https://rorjpqbjuqmgedkqejqy.supabase.co',
+    publishableKey: 'sb_publishable_L9fJokDPbXucm_3yoNOLYg_CNo3ywMv',
   );
 
   runApp(const MyApp());

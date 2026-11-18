@@ -364,7 +364,7 @@ class _LoginScreenState extends State<LoginScreen>
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Image.asset(
-                                      'assets/images/google_logo.png',
+                                      'lib/assets/images/google_logo.png',
                                       width: 21,
                                       height: 21,
                                     ),
