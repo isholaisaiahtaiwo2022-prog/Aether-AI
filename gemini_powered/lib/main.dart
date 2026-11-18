@@ -8,9 +8,13 @@ import 'package:testing/features/chat/presentations/screens/auth_gate.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  const supabasePublishableKey =
+      String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
+
   await Supabase.initialize(
-    url: 'https://rorjpqbjuqmgedkqejqy.supabase.co',
-    publishableKey: 'sb_publishable_L9fJokDPbXucm_3yoNOLYg_CNo3ywMv',
+    url: supabaseUrl,
+    publishableKey: supabasePublishableKey,
   );
 
   runApp(const MyApp());
